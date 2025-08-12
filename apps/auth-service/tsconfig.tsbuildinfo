@@ -1,13 +1,13 @@
 {
-  "compilerOptions": {
+  "fileNames": [],
+  "fileInfos": [],
+  "root": [],
+  "options": {
     "composite": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "importHelpers": true,
-    "isolatedModules": true,
-    "lib": ["es2022"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": 199,
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
@@ -15,10 +15,7 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2022",
-    "baseUrl": ".",
-    "paths": {
-      "@libs/*": ["libs/*"]
-    }
-  }
+    "target": 9
+  },
+  "version": "5.8.3"
 }
