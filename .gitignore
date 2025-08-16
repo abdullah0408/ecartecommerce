@@ -50,3 +50,7 @@ test-output
 
 # Prisma generated files
 /generated/prisma
+
+# Next.js
+.next
+out
