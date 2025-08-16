@@ -4,10 +4,10 @@ import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import GoogleButton from '../../../../components/GoogleButton';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { use, useRef, useState } from 'react';
-import { set, useForm } from 'react-hook-form';
+import React, { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 type FormData = {
   name: string;
@@ -17,13 +17,11 @@ type FormData = {
 
 const SignUpPage = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [canResend, setCanResend] = useState(true);
   const [timer, setTimer] = useState(60);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [showOtp, setShowOtp] = useState(false);
   const [userData, setUserData] = useState<FormData | null>(null);
-
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const router = useRouter();
@@ -63,6 +61,20 @@ const SignUpPage = () => {
     },
   });
 
+  const verifyOtpMutation = useMutation({
+    mutationFn: async () => {
+      if (!userData) return;
+      const response = await axios.post(
+        process.env.NEXT_PUBLIC_BACKEND_URL + '/api/verify-user',
+        { ...userData, otp: otp.join('') }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      router.push('/sign-in');
+    },
+  });
+
   const onSubmit = (data: FormData) => {
     signUpMutation.mutate(data);
   };
@@ -88,7 +100,11 @@ const SignUpPage = () => {
     }
   };
 
-  const resendOtp = () => {};
+  const resendOtp = () => {
+    if (userData) {
+      signUpMutation.mutate(userData);
+    }
+  };
 
   return (
     <div className="w-full py-10 min-h-[85vh] bg-[#f1f1f1]">
@@ -121,13 +137,13 @@ const SignUpPage = () => {
               <input
                 type="text"
                 placeholder="Abdullah"
-                className="w-full p-2 border border-gray-300 outline-0 !rounded mb-1"
+                className="w-full p-2 border border-gray-300 outline-0 !rounded"
                 {...register('name', {
                   required: 'Name is required',
                 })}
               />
               {errors.name && (
-                <p className="text-red-500 text-sm">
+                <p className="text-red-500 text-sm mt-1">
                   {String(errors.name.message)}
                 </p>
               )}
@@ -135,14 +151,14 @@ const SignUpPage = () => {
               <input
                 type="email"
                 placeholder="example@example.com"
-                className="w-full p-2 border border-gray-300 outline-0 !rounded mb-1"
+                className="w-full p-2 border border-gray-300 outline-0 !rounded"
                 {...register('email', {
                   required: 'Email is required',
                   pattern: { value: /^\S+@\S+$/i, message: 'Email is invalid' },
                 })}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm">
+                <p className="text-red-500 text-sm mt-1">
                   {String(errors.email.message)}
                 </p>
               )}
@@ -151,7 +167,7 @@ const SignUpPage = () => {
                 <input
                   type={passwordVisible ? 'text' : 'password'}
                   placeholder="Min. 8 characters"
-                  className="w-full p-2 border border-gray-300 outline-0 !rounded mb-1"
+                  className="w-full p-2 border border-gray-300 outline-0 !rounded"
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -167,23 +183,27 @@ const SignUpPage = () => {
                 >
                   {passwordVisible ? <EyeIcon /> : <EyeOffIcon />}
                 </button>
-                {errors.password && (
-                  <p className="text-red-500 text-sm">
-                    {String(errors.password.message)}
-                  </p>
-                )}
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {String(errors.password.message)}
+                </p>
+              )}
 
               <button
                 type="submit"
-                className="w-full mt-4 text-lg cursor-pointer bg-black text-white py-2 rounded-lg"
+                disabled={signUpMutation.isPending}
+                className="w-full mt-4 text-lg cursor-pointer bg-blue-500 text-white py-2 rounded-lg"
               >
                 {signUpMutation.isPending ? 'Signing Up...' : 'Sign Up'}
               </button>
-
-              {serverError && (
-                <p className="text-red-500 text-sm">{String(serverError)}</p>
-              )}
+              {signUpMutation?.isError &&
+                signUpMutation.error instanceof AxiosError && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {signUpMutation.error.response?.data?.message ||
+                      signUpMutation.error.message}
+                  </p>
+                )}
             </form>
           ) : (
             <div>
@@ -206,9 +226,20 @@ const SignUpPage = () => {
                   />
                 ))}
               </div>
-              <button className="w-full mt-4 text-lg cursor-pointer bg-blue-500 text-white py-2 rounded-lg">
-                Verify OTP
+              <button
+                disabled={verifyOtpMutation.isPending}
+                onClick={() => verifyOtpMutation.mutate()}
+                className="w-full mt-4 text-lg cursor-pointer bg-blue-500 text-white py-2 rounded-lg"
+              >
+                {verifyOtpMutation.isPending ? 'Verifying...' : 'Verify OTP'}
               </button>
+              {verifyOtpMutation?.isError &&
+                verifyOtpMutation.error instanceof AxiosError && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {verifyOtpMutation.error.response?.data?.message ||
+                      verifyOtpMutation.error.message}
+                  </p>
+                )}
               <p className="text-center text-sm mt-4">
                 {canResend ? (
                   <button
