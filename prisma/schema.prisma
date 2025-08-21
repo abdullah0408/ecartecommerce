@@ -9,12 +9,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String   @unique
-  password  String?
-  avatar    Image?
-  following String[]
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String       @unique
+  password    String?
+  avatar      Image?
+  following   String[]
+  shopReviews ShopReview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -23,15 +24,67 @@ model User {
 }
 
 model Image {
-  id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  file_id String
-  url     String
-  userId  String? @unique @db.ObjectId
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  fileId           String
+  url              String
+  userId           String? @unique @db.ObjectId
+  shopAvatarId     String? @unique @db.ObjectId
+  shopCoverImageId String? @unique @db.ObjectId
 
-  user User? @relation(fields: [userId], references: [id])
+  user           User? @relation(fields: [userId], references: [id])
+  shopAvatar     Shop? @relation("ShopAvatar", fields: [shopAvatarId], references: [id])
+  shopCoverImage Shop? @relation("ShopCoverImage", fields: [shopCoverImageId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("images")
+}
+
+model Seller {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String  @unique
+  phoneNumber String
+  country     String
+  password    String
+  stripeId    String?
+  shop        Shop?
+  shopId      String? @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Shop {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String?
+  category     String
+  avatar       Image?       @relation("ShopAvatar")
+  coverImage   Image?       @relation("ShopCoverImage")
+  address      String
+  openingHours String?
+  website      String?
+  socialLinks  Json[]
+  rating       Float        @default(0)
+  shopReviews  ShopReview[]
+  sellerId     String       @unique @db.ObjectId
+  seller       Seller       @relation(fields: [sellerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShopReview {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String  @db.ObjectId
+  shopId String  @db.ObjectId
+  user   User    @relation(fields: [userId], references: [id])
+  shop   Shop    @relation(fields: [shopId], references: [id])
+  rating Float
+  review String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

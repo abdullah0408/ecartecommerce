@@ -1,4 +1,4 @@
-import { AuthError, ValidationError } from '@libs/middleware/error-handler';
+import { NotFoundError, ValidationError } from '@libs/middleware/error-handler';
 import redis from '@libs/redis';
 import crypto from 'crypto';
 import { sendEmail } from './sendMail';
@@ -140,11 +140,13 @@ export const handleForgotPassword = async (
       throw new ValidationError('Email is required');
     }
 
-    const user =
-      userType === 'user' &&
-      (await prisma.user.findUnique({ where: { email } }));
-    if (!user) {
-      throw new AuthError(
+    const account =
+      userType === 'user'
+        ? await prisma.user.findUnique({ where: { email } })
+        : await prisma.seller.findUnique({ where: { email } });
+
+    if (!account) {
+      throw new NotFoundError(
         `${userType.charAt(0).toUpperCase()}${userType.slice(1)} not found`
       );
     }
@@ -152,7 +154,11 @@ export const handleForgotPassword = async (
     await checkOptRestrictions(email);
     await trackOtpRequests(email);
 
-    await sendOtp(user.name, email, 'user-forgot-password');
+    await sendOtp(
+      account.name,
+      email,
+      userType === 'user' ? 'user-forgot-password' : 'seller-forgot-password'
+    );
 
     response.status(200).json({
       message: 'OTP sent successfully. Please check your email.',

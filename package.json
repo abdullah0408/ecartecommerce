@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "npx nx run-many --target=serve --all",
     "auth-service-docs": "node apps/auth-service/src/swagger.js",
-    "dev:user-ui": "npx nx run-many --target=dev --all --projects=user-ui"
+    "dev:user-ui": "npx nx run-many --target=dev --all --projects=user-ui",
+    "dev:seller-ui": "npx nx run-many --target=dev --all --projects=seller-ui"
   },
   "private": true,
   "dependencies": {
@@ -30,6 +31,7 @@
     "react-dom": "19.0.0",
     "react-hook-form": "^7.62.0",
     "react-hot-toast": "^2.6.0",
+    "stripe": "^18.4.0",
     "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.1"
   },
@@ -43,8 +45,8 @@
     "@nx/eslint-plugin": "21.3.11",
     "@nx/express": "21.3.11",
     "@nx/jest": "21.3.11",
-    "@nx/js": "21.3.11",
-    "@nx/next": "^21.3.11",
+    "@nx/js": "21.4.0",
+    "@nx/next": "21.4.0",
     "@nx/node": "21.3.11",
     "@nx/web": "21.3.11",
     "@nx/webpack": "21.3.11",

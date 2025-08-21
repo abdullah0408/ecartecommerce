@@ -48,7 +48,7 @@ const ForgotPasswordPage = () => {
   const requestOtpMutation = useMutation({
     mutationFn: async ({ email }: { email: string }) => {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/forgot-user-password`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/forgot-seller-password`,
         { email }
       );
       return response.data;
@@ -94,7 +94,7 @@ const ForgotPasswordPage = () => {
         throw new Error('Missing user email or password');
       }
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reset-user-password`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reset-seller-password`,
         { email: userEmail, newPassword: password }
       );
       return response.data;

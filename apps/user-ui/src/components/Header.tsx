@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import React from 'react';
 import {
@@ -6,9 +8,12 @@ import {
   ShoppingCartIcon,
   UserIcon,
 } from 'lucide-react';
-
 import HeaderBottom from './HeaderBottom';
+import useUser from '../hooks/useUser';
+
 const Header = () => {
+  const { user, isLoading } = useUser();
+
   return (
     <div className="w-full bg-white">
       <div className="w-[80%] py-5 m-auto flex items-center justify-between">
@@ -29,16 +34,37 @@ const Header = () => {
         </div>
         <div className="flex items-center gap-8 ">
           <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="border-2 w-[50px] h-[50px] flex items-center justify-center rounded-full border-[#010f1c1a]"
-            >
-              <UserIcon />
-            </Link>
-            <Link href="/">
-              <span className="black font-medium">Hello, </span>
-              <span className="font-semibold">Sign In</span>
-            </Link>
+            {!isLoading && user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="border-2 w-[50px] h-[50px] flex items-center justify-center rounded-full border-[#010f1c1a]"
+                >
+                  <UserIcon />
+                </Link>
+                <Link href="/profile" className="flex flex-col">
+                  <span className="black font-medium">Hello,</span>
+                  <span className="font-semibold">
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="border-2 w-[50px] h-[50px] flex items-center justify-center rounded-full border-[#010f1c1a]"
+                >
+                  <UserIcon />
+                </Link>
+                <Link href="/sign-in" className="flex flex-col">
+                  <span className="black font-medium">Hello, </span>
+                  <span className="font-semibold">
+                    {isLoading ? '...' : 'Sign In'}
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-5">
             <Link href="/wishlist" className="relative">
