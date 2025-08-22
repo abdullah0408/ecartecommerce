@@ -110,6 +110,9 @@ export const userLogin = async (
       return next(new AuthError('Invalid email or password'));
     }
 
+    response.clearCookie('seller_access_token');
+    response.clearCookie('seller_refresh_token');
+
     const accessToken = jwt.sign(
       { id: user.id, role: 'user' },
       process.env.JWT_SECRET_ACCESS_TOKEN as string,
@@ -145,12 +148,16 @@ export const userLogin = async (
 };
 
 export const refreshToken = async (
-  request: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  request: any,
   response: Response,
   next: NextFunction
 ) => {
   try {
-    const refreshToken = request.cookies.refresh_token;
+    const refreshToken =
+      request.cookies['refresh_token'] ||
+      request.cookies['seller_refresh_token'] ||
+      request.headers.authorization?.split(' ')[1];
 
     if (!refreshToken) {
       return next(
@@ -167,9 +174,17 @@ export const refreshToken = async (
       return next(new JsonWebTokenError('Forbidden, Invalid refresh token'));
     }
 
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    let account;
+    if (decoded.role === 'user') {
+      account = await prisma.user.findUnique({ where: { id: decoded.id } });
+    } else if (decoded.role === 'seller') {
+      account = await prisma.seller.findUnique({
+        where: { id: decoded.id },
+        include: { shop: true },
+      });
+    }
 
-    if (!user) {
+    if (!account) {
       return next(new NotFoundError('User/Seller not found'));
     }
 
@@ -179,7 +194,13 @@ export const refreshToken = async (
       { expiresIn: '15m' }
     );
 
-    setCookie(response, 'access_token', newAccessToken);
+    if (decoded.role === 'user') {
+      setCookie(response, 'access_token', newAccessToken);
+    } else if (decoded.role === 'seller') {
+      setCookie(response, 'seller_access_token', newAccessToken);
+    }
+
+    request.role = decoded.role;
 
     response.status(201).json({
       success: true,
@@ -323,6 +344,9 @@ export const sellerLogin = async (
     if (!isPasswordValid) {
       return next(new AuthError('Invalid email or password'));
     }
+
+    response.clearCookie('access_token');
+    response.clearCookie('refresh_token');
 
     const accessToken = jwt.sign(
       { id: seller.id, role: 'seller' },
