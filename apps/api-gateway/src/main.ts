@@ -4,6 +4,7 @@ import proxy from 'express-http-proxy';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import initializeSiteConfig from './libs/initializeSiteConfig';
 
 const app = express();
 
@@ -109,7 +110,7 @@ app.set('trust proxy', 1);
 
 /**
  * Rate limiting middleware to control request frequency and protect the server.
- * 
+ *
  * - Limits requests within a 15-minute window (`windowMs`).
  * - Dynamically sets the maximum allowed requests based on whether the request has a user:
  *   - Authenticated users (`request.user` exists) get a higher limit (1000 requests).
@@ -118,7 +119,7 @@ app.set('trust proxy', 1);
  * - Enables sending standardized rate limit info in response headers:
  *   - `RateLimit-*` headers (modern standard).
  *   - `X-RateLimit-*` headers (legacy support for older clients).
- * 
+ *
  * This helps prevent abuse and denial-of-service attacks while allowing
  * authenticated users more generous usage.
  */
@@ -136,10 +137,16 @@ app.get('/gateway-health', (req, res) => {
   res.send({ message: 'Welcome to api-gateway!' });
 });
 
-app.use("/", proxy("http://localhost:6001"));
+app.use('/products', proxy('http://localhost:6002'));
+app.use('/', proxy('http://localhost:6001'));
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}/api`);
+  try {
+    initializeSiteConfig();
+  } catch (error) {
+    console.error('Error during site configuration initialization:', error);
+  }
 });
 server.on('error', console.error);
