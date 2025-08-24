@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/utils/axiosInstance';
 import RichTextEditor from '@components/RichTextEditor';
 import SizeSelector from '@components/SizeSelector';
+import { DiscountCode } from '@/utils/types';
 
 const Page = () => {
   const {
@@ -46,6 +47,18 @@ const Page = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
+
+  const { data: discountCodes = [], isLoading: discountCodeLoading } = useQuery(
+    {
+      queryKey: ['shop_discount_codes'],
+      queryFn: async () => {
+        const response = await axiosInstance.get(
+          '/products/api/get-discount-codes'
+        );
+        return response?.data?.discountCodes || [];
+      },
+    }
+  );
 
   const categories = data?.categories || [];
   const subCategories = useMemo(
@@ -490,9 +503,39 @@ const Page = () => {
               </div>
               <div className="mt-3">
                 <label className="block font-semibold text-gray-300 mb-1">
-                  Select Discount Codes (optional)
+                  Select Discount Codes
                 </label>
-                {/** TODO: Implement discount code selection */}
+                {discountCodeLoading ? (
+                  <p className="text-gray-400">Loading discount codes...</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {discountCodes?.map((code: DiscountCode) => (
+                      <button
+                        key={code?.id}
+                        type="button"
+                        className={`px-3 py-1 rounded-md text-sm font-semibold border ${
+                          watch('discountCodes')?.includes(code.id)
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'
+                        }`}
+                        onClick={() => {
+                          const currentSelection = watch('discountCodes') || [];
+                          const updatedSelection = currentSelection?.includes(
+                            code.id
+                          )
+                            ? currentSelection.filter(
+                                (id: string) => id !== code.id
+                              )
+                            : [...currentSelection, code.id];
+                          setValue('discountCodes', updatedSelection);
+                        }}
+                      >
+                        {code.publicName} ({code.discountValue}
+                        {code.discountType === 'percentage' ? '%' : '$'})
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

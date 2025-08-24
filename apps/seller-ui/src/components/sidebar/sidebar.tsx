@@ -29,7 +29,6 @@ const Sidebar = () => {
   const { activeSidebarItem, setActiveSidebarItem } = useSidebar();
   const pathName = usePathname();
   const { seller } = useSeller();
-  console.log('Seller:', seller);
 
   useEffect(() => {
     setActiveSidebarItem(pathName);
