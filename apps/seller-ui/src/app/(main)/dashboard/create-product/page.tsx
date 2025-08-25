@@ -73,40 +73,64 @@ const Page = () => {
     return selectedCategory ? subCategories[selectedCategory] || [] : [];
   }, [selectedCategory, subCategories]);
 
-  const handleImageChange = (file: File | null, index: number) => {
-    const updatedImages = [...images];
+  const convertFileToBase64 = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+  const handleImageChange = async (file: File | null, index: number) => {
+    if (!file) return;
 
-    updatedImages[index] = file;
+    try {
+      const base64 = await convertFileToBase64(file);
 
-    if (index === images.length - 1 && images.length < 8) {
-      updatedImages.push(null);
+      const response = await axiosInstance.post(
+        '/products/api/upload-product-image',
+        {
+          file: base64,
+        }
+      );
+      const updatedImages = [...images];
+      updatedImages[index] = response.data.fileId;
+      if (index === images.length - 1 && updatedImages.length < 8) {
+        updatedImages.push(null);
+      }
+
+      setImages(updatedImages);
+      setValue('images', updatedImages);
+    } catch (error) {
+      console.log(error);
     }
-    setImages(updatedImages);
-    setValue('images', updatedImages);
   };
 
   const handleSaveDraft = () => {
     console.log('Draft saved');
   };
 
-  const handleImageRemove = (index: number) => {
-    setImages((prevImages) => {
-      const updatedImages = [...prevImages];
-
-      if (index === -1) {
-        updatedImages[0] = null;
-      } else {
-        updatedImages.splice(index, 1);
+  const handleImageRemove = async (index: number) => {
+    try {
+      const updatedImages = [...images];
+      const imageToRemove = updatedImages[index];
+      if (imageToRemove && typeof imageToRemove === 'string') {
+        await axiosInstance.delete('/products/api/delete-product-image', {
+          data: { fileId: imageToRemove },
+        });
       }
+
+      updatedImages.splice(index, 1);
 
       if (!updatedImages.includes(null) && updatedImages.length < 8) {
         updatedImages.push(null);
       }
 
-      return updatedImages;
-    });
-
-    setValue('images', images);
+      setImages(updatedImages);
+      setValue('images', updatedImages);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

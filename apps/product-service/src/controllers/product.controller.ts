@@ -1,6 +1,8 @@
+import imagekit from '@libs/imageKit';
 import { NotFoundError, ValidationError } from '@libs/middleware/error-handler';
 import prisma from '@libs/prisma';
 import { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 
 export const getCategories = async (
   request: Request,
@@ -154,6 +156,55 @@ export const deleteDiscountCode = async (
       .json({ message: 'Discount code deleted successfully' });
   } catch (error) {
     console.error('Error deleting discount code:', error);
+    return next(error);
+  }
+};
+
+export const uploadProductImage = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  try {
+    const { file } = request.body;
+
+    const uploadResponse = await imagekit.upload({
+      file,
+      fileName: `product-${Date.now()}-${randomUUID()}`,
+      folder: '/ecart/products',
+    });
+
+    response.status(201).json({
+      fileUrl: uploadResponse.url,
+      fileName: uploadResponse.name,
+      fileId: uploadResponse.fileId,
+    });
+  } catch (error) {
+    console.error('Error uploading product image:', error);
+    return next(error);
+  }
+};
+
+export const deleteProductImage = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  try {
+    const { fileId } = request.body;
+
+    if (!fileId) {
+      return next(new ValidationError('Invalid request.'));
+    }
+
+    const imageDeleteResponse = await imagekit.deleteFile(fileId);
+
+    response.status(200).json({
+      success: true,
+      response: imageDeleteResponse,
+    });
+  } catch (error) {
+    console.error('Error deleting product image:', error);
     return next(error);
   }
 };

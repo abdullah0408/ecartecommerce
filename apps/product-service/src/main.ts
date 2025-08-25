@@ -43,8 +43,13 @@ app.use(
  *
  * This enables Express to automatically parse JSON payloads in incoming HTTP requests
  * and make the parsed data available in req.body.
+ *
+ * The `limit: "50mb"` option increases the maximum allowed size for JSON bodies to 50 megabytes,
+ * which is useful if your application expects to handle large JSON payloads.
+ *
+ * Without this, requests with JSON bodies larger than the default limit would be rejected with an error.
  */
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 /**
  * Middleware to parse cookies from incoming HTTP requests.
